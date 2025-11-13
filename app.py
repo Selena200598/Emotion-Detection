@@ -146,6 +146,40 @@ class EmotionDetector:
         
         return max_emotion, emotion_scores
 
+    def analyze_batch(self, texts: List[str]) -> List[Dict]:
+        """Analyze multiple texts and return results"""
+        results = []
+        
+        for text in texts:
+            emotion, scores = self.predict_emotion(text)
+            results.append({
+                'text': text[:100] + '...' if len(text) > 100 else text,
+                'emotion': emotion,
+                'scores': scores
+            })
+        
+        return results
+    
+    def get_emotion_statistics(self, texts: List[str]) -> Dict:
+        """Get overall emotion statistics from a collection of texts"""
+        emotions = [self.predict_emotion(text)[0] for text in texts]
+        emotion_counts = Counter(emotions)
+        total = len(texts)
+        
+        statistics = {
+            'total_texts': total,
+            'emotion_distribution': {
+                emotion: {
+                    'count': count,
+                    'percentage': round((count / total) * 100, 2)
+                }
+                for emotion, count in emotion_counts.items()
+            },
+            'dominant_emotion': emotion_counts.most_common(1)[0][0] if emotions else 'neutral'
+        }
+        
+        return statistics
+
 app = Flask(__name__)
 
 # Initialize the emotion detector
@@ -162,5 +196,47 @@ def detect_emotion():
     
     return jsonify({'emotion': emotion, 'scores': scores})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    # Initialize detector
+    detector = EmotionDetector()
+    
+    # Sample texts for testing
+    sample_texts = [
+        "I'm so happy today! Got promoted at work! 🎉😊",
+        "This is the worst day ever. I feel so sad and disappointed 😢",
+        "I'm really angry about this terrible service! Unacceptable!",
+        "OMG! I can't believe this happened! 😲",
+        "I'm scared and worried about the future 😰",
+        "The weather is nice today.",
+        "I love this product! It's absolutely amazing and wonderful!",
+        "Not happy with this purchase. Very disappointed.",
+        "Feeling stressed and anxious about the exam tomorrow"
+    ]
+    
+    print("=" * 70)
+    print("EMOTION DETECTION SYSTEM")
+    print("=" * 70)
+    
+    # Analyze individual texts
+    print("\n📊 Individual Text Analysis:\n")
+    for text in sample_texts:
+        emotion, scores = detector.predict_emotion(text)
+        print(f"Text: {text}")
+        print(f"Detected Emotion: {emotion.upper()}")
+        print(f"Scores: {scores}")
+        print("-" * 70)
+    
+    # Batch analysis
+    print("\n📈 Batch Analysis:\n")
+    batch_results = detector.analyze_batch(sample_texts)
+    for result in batch_results:
+        print(f"Emotion: {result['emotion'].upper()} - {result['text']}")
+    
+    # Statistics
+    print("\n📊 Emotion Statistics:\n")
+    stats = detector.get_emotion_statistics(sample_texts)
+    print(f"Total texts analyzed: {stats['total_texts']}")
+    print(f"Dominant emotion: {stats['dominant_emotion'].upper()}")
+    print("\nEmotion Distribution:")
+    for emotion, data in stats['emotion_distribution'].items():
+        print(f"  {emotion.upper()}: {data['count']} ({data['percentage']}%)")
