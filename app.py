@@ -1,7 +1,5 @@
-"""
 Emotion Detection System
 Classifies text into emotions: happy, sad, angry, surprise, fear, or neutral
-"""
 
 import re
 from collections import Counter
@@ -240,3 +238,4 @@ if __name__ == "__main__":
     print("\nEmotion Distribution:")
     for emotion, data in stats['emotion_distribution'].items():
         print(f"  {emotion.upper()}: {data['count']} ({data['percentage']}%)")
+
